@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science & Tech Hub | Modern Publication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        science: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        neon: {
+                            blue: '#00f3ff',
+                            purple: '#bc13fe',
+                            green: '#0aff0a',
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 12s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(14, 165, 233, 0.5);
+            box-shadow: 0 20px 40px rgba(14, 165, 233, 0.2);
+        }
+        
+        .topic-tag {
+            background: linear-gradient(90deg, rgba(14,165,233,0.2) 0%, rgba(188,19,254,0.2) 100%);
+            border: 1px solid rgba(14,165,233,0.3);
+        }
+        
+        .upload-zone {
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(14,165,233,0.05),
+                rgba(14,165,233,0.05) 10px,
+                rgba(188,19,254,0.05) 10px,
+                rgba(188,19,254,0.05) 20px
+            );
+            border: 2px dashed rgba(14,165,233,0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .upload-zone:hover, .upload-zone.dragover {
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(14,165,233,0.1),
+                rgba(14,165,233,0.1) 10px,
+                rgba(188,19,254,0.1) 10px,
+                rgba(188,19,254,0.1) 20px
+            );
+            border-color: #00f3ff;
+            box-shadow: 0 0 30px rgba(0,243,255,0.2);
+        }
+        
+        .pdf-item {
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 20px rgba(14,165,233,0.5);
+        }
+        
+        .category-badge {
+            background: linear-gradient(135deg, #0ea5e9 0%, #bc13fe 100%);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0ea5e9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0284c7;
+        }
+        
+        .search-input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        .search-input:focus {
+            border-color: #00f3ff;
+            box-shadow: 0 0 20px rgba(0,243,255,0.2);
+            outline: none;
+        }
+        
+        .modal {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #0ea5e9 0%, #bc13fe 100%);
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body class="font-sans min-h-screen">
+
+    <!-- Particle Background -->
+    <canvas id="canvas-bg"></canvas>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-panel border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-science-500 to-purple-600 flex items-center justify-center animate-pulse-slow">
+                        <i class="fas fa-atom text-white text-xl"></i>
+                    </div>
+                    <span class="font-display font-bold text-xl tracking-tight glow-text">Science<span class="text-science-500">Hub</span></span>
+                </div>
+                
+                <div class="hidden md:flex items-center gap-8">
+                    <button onclick="showSection('library')" class="nav-btn text-sm font-medium hover:text-science-400 transition-colors flex items-center gap-2">
+                        <i class="fas fa-book-open"></i> Library
+                    </button>
+                    <button onclick="showSection('upload')" class="nav-btn text-sm font-medium hover:text-science-400 transition-colors flex items-center gap-2">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload
+                    </button>
+                    <button onclick="showStats()" class="nav-btn text-sm font-medium hover:text-science-400 transition-colors flex items-center gap-2">
+                        <i class="fas fa-chart-line"></i> Analytics
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <input type="text" id="globalSearch" placeholder="Search topics..." 
+                               class="search-input rounded-full px-4 py-1.5 text-sm w-48 focus:w-64 transition-all text-white placeholder-gray-400">
+                        <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    </div>
+                    <button class="md:hidden text-white" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden glass-panel border-t border-white/10">
+            <div class="px-4 pt-2 pb-4 space-y-2">
+                <button onclick="showSection('library')" class="block w-full text-left px-3 py-2 rounded-md text-sm hover:bg-white/5">Library</button>
+                <button onclick="showSection('upload')" class="block w-full text-left px-3 py-2 rounded-md text-sm hover:bg-white/5">Upload</button>
+                <button onclick="showStats()" class="block w-full text-left px-3 py-2 rounded-md text-sm hover:bg-white/5">Analytics</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        
+        <!-- Hero Section -->
+        <section id="hero" class="mb-12 text-center relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-science-500/20 to-purple-600/20 blur-3xl -z-10 rounded-full"></div>
+            <h1 class="font-display text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white via-science-200 to-science-400 bg-clip-text text-transparent">
+                Modern Publication
+            </h1>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto mb-8">
+                Comprehensive Science & Technology Resource Center. Access curated PDF lessons across Biology, Physics, Chemistry, and ICT.
+            </p>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                <div class="glass-card rounded-xl p-4">
+                    <div class="text-2xl font-bold text-science-400" id="totalPdfs">0</div>
+                    <div class="text-xs text-gray-400 uppercase tracking-wider">Total PDFs</div>
+                </div>
+                <div class="glass-card rounded-xl p-4">
+                    <div class="text-2xl font-bold text-purple-400" id="totalTopics">15</div>
+                    <div class="text-xs text-gray-400 uppercase tracking-wider">Topics</div>
+                </div>
+                <div class="glass-card rounded-xl p-4">
+                    <div class="text-2xl font-bold text-green-400" id="totalSize">0 MB</div>
+                    <div class="text-xs text-gray-400 uppercase tracking-wider">Storage Used</div>
+                </div>
+                <div class="glass-card rounded-xl p-4">
+                    <div class="text-2xl font-bold text-orange-400" id="lastUpload">Today</div>
+                    <div class="text-xs text-gray-400 uppercase tracking-wider">Last Upload</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Bar -->
+        <section class="mb-8 sticky top-20 z-40 glass-panel rounded-2xl p-4 flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex gap-2 overflow-x-auto pb-2 md:pb-0 max-w-full" id="categoryFilters">
+                <button onclick="filterByCategory('all')" class="filter-btn active px-4 py-2 rounded-full text-sm font-medium bg-science-600 text-white transition-all hover:scale-105">
+                    All Topics
+                </button>
+                <!-- Categories injected by JS -->
+            </div>
+            
+            <div class="flex gap-2">
+                <select id="sortSelect" onchange="sortPDFs()" class="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-science-500 outline-none">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="name">Name A-Z</option>
+                    <option value="size">Size</option>
+                </select>
+                <button onclick="toggleView()" class="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+                    <i class="fas fa-th-large" id="viewIcon"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Content Grid -->
+        <section id="contentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- PDF Cards injected by JS -->
+        </section>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                <i class="fas fa-folder-open text-4xl text-gray-600"></i>
+            </div>
+            <h3 class="text-xl font-display font-semibold mb-2">No PDFs found</h3>
+            <p class="text-gray-400 mb-4">Start by uploading your first science lesson</p>
+            <button onclick="showSection('upload')" class="px-6 py-2 bg-science-600 hover:bg-science-700 rounded-full text-sm font-medium transition-colors">
+                Upload PDF
+            </button>
+        </div>
+
+        <!-- Upload Section (Hidden by default) -->
+        <section id="uploadSection" class="hidden max-w-4xl mx-auto">
+            <div class="glass-panel rounded-2xl p-8">
+                <h2 class="font-display text-2xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-cloud-upload-alt text-science-400"></i>
+                    Upload New Lesson
+                </h2>
+
+                <form id="uploadForm" onsubmit="handleUpload(event)">
+                    <!-- File Drop Zone -->
+                    <div id="dropZone" class="upload-zone rounded-2xl p-12 text-center mb-6 relative cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" accept=".pdf" class="hidden" onchange="handleFileSelect(event)">
+                        <div class="mb-4">
+                            <i class="fas fa-file-pdf text-6xl text-science-500/50 mb-4 block"></i>
+                            <p class="text-lg font-medium mb-2">Drop your PDF here or click to browse</p>
+                            <p class="text-sm text-gray-400">Supports PDF files up to 50MB</p>
+                        </div>
+                        <div id="selectedFile" class="hidden mt-4 p-4 bg-white/5 rounded-lg flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-file-pdf text-science-400 text-2xl"></i>
+                                <div class="text-left">
+                                    <div class="font-medium" id="fileName">document.pdf</div>
+                                    <div class="text-xs text-gray-400" id="fileSize">2.4 MB</div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="event.stopPropagation(); clearFile()" class="text-red-400 hover:text-red-300">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-300">Title</label>
+                            <input type="text" id="pdfTitle" required class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-science-500 outline-none transition-colors" placeholder="e.g., Lifecycle of Honeybee">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-300">Category</label>
+                            <select id="pdfCategory" required class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-science-500 outline-none transition-colors">
+                                <option value="">Select Topic</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Description</label>
+                        <textarea id="pdfDescription" rows="3" class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-science-500 outline-none transition-colors resize-none" placeholder="Brief description of the content..."></textarea>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Tags (comma separated)</label>
+                        <input type="text" id="pdfTags" class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-science-500 outline-none transition-colors" placeholder="biology, grade-10, exam-prep">
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div id="uploadProgress" class="hidden mb-6">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-400">Uploading...</span>
+                            <span class="text-science-400" id="progressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-white/10 rounded-full h-1">
+                            <div class="progress-bar rounded-full" id="progressBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button type="submit" id="uploadBtn" class="flex-1 bg-gradient-to-r from-science-600 to-purple-600 hover:from-science-500 hover:to-purple-500 text-white font-medium py-3 rounded-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed">
+                            Upload PDF
+                        </button>
+                        <button type="button" onclick="showSection('library')" class="px-6 py-3 border border-white/20 rounded-lg hover:bg-white/5 transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PDF Viewer Modal -->
+    <div id="pdfModal" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="glass-panel w-full max-w-6xl h-[90vh] rounded-2xl overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-file-pdf text-science-400 text-xl"></i>
+                    <div>
+                        <h3 class="font-display font-semibold" id="modalPdfTitle">Document Title</h3>
+                        <p class="text-xs text-gray-400" id="modalPdfMeta">Category • 2.4 MB</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="downloadCurrentPDF()" class="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Download">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button onclick="closeModal()" class="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 bg-gray-900 relative overflow-hidden">
+                <iframe id="pdfViewer" class="w-full h-full border-none"></iframe>
+                <div id="pdfPlaceholder" class="absolute inset-0 flex items-center justify-center bg-gray-900">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-4xl text-science-500 mb-4"></i>
+                        <p class="text-gray-400">Loading PDF...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="glass-panel rounded-lg px-6 py-3 flex items-center gap-3 border-l-4 border-science-500">
+            <i class="fas fa-check-circle text-science-400"></i>
+            <span id="toastMessage">Operation successful</span>
+        </div>
+    </div>
+
+    <script>
+        // Data Structure
+        const categories = [
+            { id: 'biology', name: 'Biology', icon: 'fa-dna', color: 'from-green-500 to-emerald-600', topics: ['Scientific study', 'Classification of living things', 'Lifecycle of honeybee', 'Heredity', 'Physiological structure and life process', 'Nature and environment'] },
+            { id: 'physics', name: 'Physics', icon: 'fa-atom', color: 'from-blue-500 to-cyan-600', topics: ['Force and Motion', 'Pressure', 'Heat', 'Wave', 'Electricity and Magnetism', 'Universe'] },
+            { id: 'chemistry', name: 'Chemistry', icon: 'fa-flask', color: 'from-purple-500 to-pink-600', topics: ['Classification of elements', 'Chemical reaction', 'Some gases', 'Metals', 'Hydrocarbon and its compounds', 'Chemicals used in daily life'] },
+            { id: 'ict', name: 'ICT', icon: 'fa-microchip', color: 'from-orange-500 to-red-600', topics: ['Information and communication technology'] }
+        ];
+
+        // Flatten topics for dropdown
+        const allTopics = categories.flatMap(cat => cat.topics.map(topic => ({ topic, category: cat.id, categoryName: cat.name })));
+
+        // State Management
+        let pdfs = JSON.parse(localStorage.getItem('sciencePdfs')) || [];
+        let currentFilter = 'all';
+        let currentView = 'grid';
+        let currentPDF = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCanvas();
+            renderCategories();
+            renderPDFs();
+            updateStats();
+            populateCategorySelect();
+            
+            // Global search
+            document.getElementById('globalSearch').addEventListener('input', (e) => {
+                searchPDFs(e.target.value);
+            });
+
+            // Drag and drop
+            const dropZone = document.getElementById('dropZone');
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type === 'application/pdf') {
+                    handleFile(files[0]);
+                } else {
+                    showToast('Please upload a PDF file', 'error');
+                }
+            });
+        });
+
+        // Canvas Animation
+        function initCanvas() {
+            const canvas = document.getElementById('canvas-bg');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let particles = [];
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.vx = (Math.random() - 0.5) * 0.5;
+                    this.vy = (Math.random() - 0.5) * 0.5;
+                    this.size = Math.random() * 2;
+                    this.color = Math.random() > 0.5 ? 'rgba(14, 165, 233, 0.5)' : 'rgba(188, 19, 254, 0.3)';
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.x < 0 || this.x > width) this.vx *= -1;
+                    if (this.y < 0 || this.y > height) this.vy *= -1;
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < 100; i++) particles.push(new Particle());
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                
+                // Draw connections
+                particles.forEach((p1, i) => {
+                    particles.slice(i + 1).forEach(p2 => {
+                        const dx = p1.x - p2.x;
+                        const dy = p1.y - p2.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 150) {
+                            ctx.strokeStyle = `rgba(14, 165, 233, ${0.1 * (1 - dist/150)})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.beginPath();
+                            ctx.moveTo(p1.x, p1.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.stroke();
+                        }
+                    });
+                });
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Render Functions
+        function renderCategories() {
+            const container = document.getElementById('categoryFilters');
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `filter-btn px-4 py-2 rounded-full text-sm font-medium border border-white/10 hover:border-science-500/50 transition-all whitespace-nowrap`;
+                btn.innerHTML = `<i class="fas ${cat.icon} mr-2"></i>${cat.name}`;
+                btn.onclick = () => filterByCategory(cat.id);
+                container.appendChild(btn);
+            });
+        }
+
+        function populateCategorySelect() {
+            const select = document.getElementById('pdfCategory');
+            allTopics.forEach(({ topic, categoryName }) => {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.textContent = `${topic} (${categoryName})`;
+                select.appendChild(option);
+            });
+        }
+
+        function renderPDFs(filtered = pdfs) {
+            const grid = document.getElementById('contentGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            grid.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            grid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            filtered.forEach((pdf, index) => {
+                const card = createPDFCard(pdf, index);
+                grid.appendChild(card);
+            });
+        }
+
+        function createPDFCard(pdf, index) {
+            const div = document.createElement('div');
+            div.className = 'pdf-item glass-card rounded-xl overflow-hidden group cursor-pointer';
+            div.onclick = () => openPDF(pdf);
+            
+            const category = categories.find(c => c.id === pdf.categoryId) || categories[0];
+            const date = new Date(pdf.uploadDate).toLocaleDateString();
+            
+            div.innerHTML = `
+                <div class="h-32 bg-gradient-to-br ${category.color} relative overflow-hidden">
+                    <div class="absolute inset-0 bg-black/20"></div>
+                    <div class="absolute top-4 right-4">
+                        <i class="fas ${category.icon} text-4xl text-white/30"></i>
+                    </div>
+                    <div class="absolute bottom-4 left-4">
+                        <span class="px-2 py-1 bg-black/30 backdrop-blur-md rounded text-xs font-medium text-white border border-white/20">
+                            ${category.name}
+                        </span>
+                    </div>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-display font-semibold text-lg mb-2 line-clamp-2 group-hover:text-science-400 transition-colors">${pdf.title}</h3>
+                    <p class="text-sm text-gray-400 mb-4 line-clamp-2">${pdf.description || 'No description available'}</p>
+                    
+                    <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
+                        <span class="flex items-center gap-1"><i class="far fa-calendar"></i> ${date}</span>
+                        <span class="flex items-center gap-1"><i class="far fa-file"></i> ${pdf.size}</span>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        ${pdf.tags.slice(0, 3).map(tag => `
+                            <span class="text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400">${tag}</span>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
+                        <button onclick="event.stopPropagation(); openPDF(pdf)" class="text-sm text-science-400 hover:text-science-300 font-medium flex items-center gap-1">
+                            View <i class="fas fa-arrow-right text-xs"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deletePDF(${index})" class="text-gray-500 hover:text-red-400 transition-colors">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        // Filter and Search
+        function filterByCategory(categoryId) {
+            currentFilter = categoryId;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-science-600', 'text-white');
+                btn.classList.add('border', 'border-white/10');
+            });
+            event.target.classList.add('active', 'bg-science-600', 'text-white');
+            event.target.classList.remove('border', 'border-white/10');
+            
+            if (categoryId === 'all') {
+                renderPDFs(pdfs);
+            } else {
+                const filtered = pdfs.filter(pdf => pdf.categoryId === categoryId);
+                renderPDFs(filtered);
+            }
+        }
+
+        function searchPDFs(query) {
+            if (!query) {
+                renderPDFs(pdfs);
+                return;
+            }
+            const lower = query.toLowerCase();
+            const filtered = pdfs.filter(pdf => 
+                pdf.title.toLowerCase().includes(lower) ||
+                pdf.description.toLowerCase().includes(lower) ||
+                pdf.tags.some(tag => tag.toLowerCase().includes(lower))
+            );
+            renderPDFs(filtered);
+        }
+
+        function sortPDFs() {
+            const sort = document.getElementById('sortSelect').value;
+            let sorted = [...pdfs];
+            
+            switch(sort) {
+                case 'newest':
+                    sorted.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+                    break;
+                case 'oldest':
+                    sorted.sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
+                    break;
+                case 'name':
+                    sorted.sort((a, b) => a.title.localeCompare(b.title));
+                    break;
+                case 'size':
+                    sorted.sort((a, b) => parseFloat(b.size) - parseFloat(a.size));
+                    break;
+            }
+            renderPDFs(sorted);
+        }
+
+        // Upload Functions
+        function showSection(section) {
+            document.getElementById('hero').classList.remove('hidden');
+            document.getElementById('contentGrid').classList.remove('hidden');
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('categoryFilters').parentElement.classList.remove('hidden');
+            
+            if (section === 'upload') {
+                document.getElementById('hero').classList.add('hidden');
+                document.getElementById('contentGrid').classList.add('hidden');
+                document.getElementById('uploadSection').classList.remove('hidden');
+                document.getElementById('categoryFilters').parentElement.classList.add('hidden');
+                document.getElementById('emptyState').classList.add('hidden');
+            }
+            
+            // Close mobile menu
+            document.getElementById('mobileMenu').classList.add('hidden');
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) handleFile(file);
+        }
+
+        function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                showToast('Please select a PDF file', 'error');
+                return;
+            }
+            
+            document.getElementById('selectedFile').classList.remove('hidden');
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            
+            // Auto-fill title if empty
+            if (!document.getElementById('pdfTitle').value) {
+                document.getElementById('pdfTitle').value = file.name.replace('.pdf', '');
+            }
+            
+            window.currentFile = file;
+        }
+
+        function clearFile() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('selectedFile').classList.add('hidden');
+            window.currentFile = null;
+        }
+
+        async function handleUpload(event) {
+            event.preventDefault();
+            
+            if (!window.currentFile) {
+                showToast('Please select a PDF file', 'error');
+                return;
+            }
+            
+            const title = document.getElementById('pdfTitle').value;
+            const category = document.getElementById('pdfCategory').value;
+            const description = document.getElementById('pdfDescription').value;
+            const tags = document.getElementById('pdfTags').value.split(',').map(t => t.trim()).filter(t => t);
+            
+            // Find category ID
+            const catObj = allTopics.find(t => t.topic === category);
+            
+            // Show progress
+            document.getElementById('uploadProgress').classList.remove('hidden');
+            document.getElementById('uploadBtn').disabled = true;
+            
+            // Simulate upload progress
+            for (let i = 0; i <= 100; i += 10) {
+                await new Promise(r => setTimeout(r, 200));
+                document.getElementById('progressBar').style.width = i + '%';
+                document.getElementById('progressPercent').textContent = i + '%';
+            }
+            
+            // Create object URL for the file
+            const fileUrl = URL.createObjectURL(window.currentFile);
+            
+            const newPdf = {
+                id: Date.now(),
+                title,
+                categoryId: catObj ? catObj.category : 'biology',
+                topic: category,
+                description,
+                tags: tags.length ? tags : [category],
+                size: formatFileSize(window.currentFile.size),
+                uploadDate: new Date().toISOString(),
+                fileUrl: fileUrl,
+                fileName: window.currentFile.name
+            };
+            
+            pdfs.unshift(newPdf);
+            localStorage.setItem('sciencePdfs', JSON.stringify(pdfs));
+            
+            showToast('PDF uploaded successfully!');
+            updateStats();
+            clearFile();
+            document.getElementById('uploadForm').reset();
+            document.getElementById('uploadProgress').classList.add('hidden');
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('progressBar').style.width = '0%';
+            
+            setTimeout(() => showSection('library'), 1000);
+            renderPDFs();
+        }
+
+        function deletePDF(index) {
+            if (confirm('Are you sure you want to delete this PDF?')) {
+                pdfs.splice(index, 1);
+                localStorage.setItem('sciencePdfs', JSON.stringify(pdfs));
+                renderPDFs();
+                updateStats();
+                showToast('PDF deleted successfully');
+            }
+        }
+
+        // PDF Viewer
+        function openPDF(pdf) {
+            currentPDF = pdf;
+            document.getElementById('modalPdfTitle').textContent = pdf.title;
+            document.getElementById('modalPdfMeta').textContent = `${pdf.topic} • ${pdf.size} • ${new Date(pdf.uploadDate).toLocaleDateString()}`;
+            
+            const modal = document.getElementById('pdfModal');
+            const viewer = document.getElementById('pdfViewer');
+            const placeholder = document.getElementById('pdfPlaceholder');
+            
+            modal.classList.add('active');
+            placeholder.classList.remove('hidden');
+            
+            // In a real app, this would load the actual PDF
+            // For demo, we'll use a sample PDF or the object URL
+            setTimeout(() => {
+                viewer.src = pdf.fileUrl || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+                placeholder.classList.add('hidden');
+            }, 1000);
+        }
+
+        function closeModal() {
+            document.getElementById('pdfModal').classList.remove('active');
+            document.getElementById('pdfViewer').src = '';
+        }
+
+        function downloadCurrentPDF() {
+            if (currentPDF && currentPDF.fileUrl) {
+                const a = document.createElement('a');
+                a.href = currentPDF.fileUrl;
+                a.download = currentPDF.fileName || currentPDF.title + '.pdf';
+                a.click();
+            }
+        }
+
+        // Utilities
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateStats() {
+            document.getElementById('totalPdfs').textContent = pdfs.length;
+            
+            const totalBytes = pdfs.reduce((acc, pdf) => {
+                const size = parseFloat(pdf.size);
+                const unit = pdf.size.split(' ')[1];
+                const multipliers = { 'Bytes': 1, 'KB': 1024, 'MB': 1024*1024, 'GB': 1024*1024*1024 };
+                return acc + (size * (multipliers[unit] || 1));
+            }, 0);
+            
+            document.getElementById('totalSize').textContent = formatFileSize(totalBytes);
+            
+            if (pdfs.length > 0) {
+                const last = new Date(pdfs[0].uploadDate);
+                const today = new Date();
+                const diff = Math.floor((today - last) / (1000 * 60 * 60 * 24));
+                document.getElementById('lastUpload').textContent = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : `${diff} days ago`;
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMessage');
+            const icon = toast.querySelector('i');
+            
+            msg.textContent = message;
+            if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle text-red-400';
+                toast.querySelector('.glass-panel').style.borderLeftColor = '#ef4444';
+            } else {
+                icon.className = 'fas fa-check-circle text-science-400';
+                toast.querySelector('.glass-panel').style.borderLeftColor = '#0ea5e9';
+            }
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        }
+
+        function toggleView() {
+            const grid = document.getElementById('contentGrid');
+            const icon = document.getElementById('viewIcon');
+            
+            if (currentView === 'grid') {
+                currentView = 'list';
+                grid.classList.remove('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
+                grid.classList.add('grid-cols-1');
+                icon.classList.remove('fa-th-large');
+                icon.classList.add('fa-list');
+            } else {
+                currentView = 'grid';
+                grid.classList.remove('grid-cols-1');
+                grid.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
+                icon.classList.remove('fa-list');
+                icon.classList.add('fa-th-large');
+            }
+        }
+
+        function showStats() {
+            showToast('Analytics feature coming soon!', 'info');
+        }
+
+        // Close modal on outside click
+        document.getElementById('pdfModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+    </script>
+</body>
+</html>
